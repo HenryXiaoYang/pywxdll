@@ -215,4 +215,3 @@ class Pywxdll:
         s = json.dumps(qs)
         return s
 
-##
