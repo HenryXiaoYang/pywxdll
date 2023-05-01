@@ -2,31 +2,18 @@ import json
 from threading import Thread
 from time import time
 
+import requests
 import websocket
+
+import pywxdll_json as wxjson
 
 
 class Pywxdll:
     def __init__(self, ip='127.0.0.1', port=5555):  # 微信hook服务器的ip地址和端口 The ip and port for wechat hook server
+        self.ip = ip
+        self.port = port
         self.ws_url = f'ws://{ip}:{port}'  # websocket url
         self.msg_list = []
-        self.HEART_BEAT = 5005
-        self.RECV_TXT_MSG = 1
-        self.RECV_PIC_MSG = 3
-        self.USER_LIST = 500
-        self.GET_USER_LIST_SUCCSESS = 5001
-        self.GET_USER_LIST_FAIL = 5002
-        self.TXT_MSG = 555
-        self.PIC_MSG = 500
-        self.AT_MSG = 550
-        self.CHATROOM_MEMBER = 5010
-        self.CHATROOM_MEMBER_NICK = 5020
-        self.PERSONAL_INFO = 6500
-        self.DEBUG_SWITCH = 6000
-        self.PERSONAL_DETAIL = 655
-        self.DESTROY_ALL = 9999
-        self.NEW_FRIEND_REQUEST = 37
-        self.AGREE_TO_FRIEND_REQUEST = 10000
-        self.ATTATCH_FILE = 5003
 
     def thread_start(self):  # 监听hook The thread for listeing
         websocket.enableTrace(True)
@@ -40,18 +27,15 @@ class Pywxdll:
         ws.run_forever()
 
     def start(self):  # 开始监听 Start listening for incoming message
-        wx = Pywxdll('127.0.0.1', port=5555)
+        wx = Pywxdll(self.ip, port=self.port)
         thread = Thread(target=wx.thread_start)
         thread.start()
 
     def on_open(self, ws):  # For websocket
-        print('self', self)
-        print('msglist', self.msg_list)
-        print(f'{self.ws_url} opened successfully.')
+        return
 
     def on_message(self, ws, message):  # For websocket
-        print(message)
-        self.msg_list += message
+        self.msg_list.append(json.loads(message))
 
     def on_error(self, ws, error):  # For websocket
         print(error)
@@ -74,144 +58,95 @@ class Pywxdll:
 
     ######## Send ########
 
+    def send_http(self, uri, data):
+        if isinstance(data, str) or isinstance(data, bytes):
+            data = json.loads(data)
+        base_data = {
+            'id': wxjson.getid(),
+            'type': 'null',
+            'roomid': 'null',
+            'wxid': 'null',
+            'content': 'null',
+            'nickname': 'null',
+            'ext': 'null',
+        }
+        base_data.update(data)
+        url = f'http://{self.ip}:{self.port}/{uri}'
+        rsp = requests.post(url, json={'para': base_data}, timeout=5)
+        rsp = rsp.json()
+        try:
+            if 'content' in rsp and isinstance(rsp['content'], str):
+                try:
+                    rsp['content'] = json.loads(rsp['content'])
+                except:
+                    pass
+        except:
+            pass
+
     # 发送txt消息到个人或群 wxid为用户id或群id content为发送内容  Send txt message to a wxid(perosnal or group)
     def send_txt_msg(self, wxid, content: str):
-        qs = {
-            'id': self.getid(),
-            'type': self.TXT_MSG,
-            'wxid': wxid,
-            'roomid': 'null',
-            'content': content,
-            'nickname': "null",
-            'ext': 'null'
-        }
-        s = json.dumps(qs)
-        return s
+        uri = '/api/sendtxtmsg'
+        return self.send_http(uri, wxjson.send_txt_msg(wxid, content))
 
     # 发送图片信息 wxid为用户id或群id path为发送图片的路径（建议用绝对路径） Send picture to wxid(perosnal or group)
     def send_pic_msg(self, wxid, path: str):
-        qs = {
-            'id': self.getid(),
-            'type': self.PIC_MSG,
-            'wxid': wxid,
-            'roomid': 'null',
-            'content': path,
-            'nickname': "null",
-            'ext': 'null'
-        }
-        s = json.dumps(qs)
-        return s
+        uri = '/api/sendpic'
+        return self.send_http(uri, wxjson.send_pic_msg(wxid, path))
 
     # 发送@信息 roomid为群id wxid为用户id nickname为@的人昵称 content为发送内容 send @ message
     def send_at_msg(self, roomid, wxid, nickname: str, content: str):
-        qs = {
-            'id': self.getid(),
-            'type': self.AT_MSG,
-            'roomid': roomid,
-            'wxid': wxid,
-            'content': content,
-            'nickname': nickname,
-            'ext': 'null'
-        }
-        s = json.dumps(qs)
-        return s
+        uri = '/api/sendatmsg'
+        return self.send_http(uri, wxjson.send_at_msg(roomid, wxid, nickname, content))
 
     # 发送文件 wxid为用户id或者群id path为文件的路径 send attachment to chat or group
     def send_attach_msg(self, wxid, path):
-        qs = {
-            'id': self.getid(),
-            'type': self.ATTATCH_FILE,
-            'wxid': wxid,
-            'roomid': 'null',
-            'content': path,
-            'nickname': "null",
-            'ext': 'null'
-        }
-
-        s = json.dumps(qs)
-        return s
+        uri = '/api/sendattatch'
+        return self.send_http(uri, wxjson.send_attach_msg(wxid, path))
 
     ######## 获取信息 ########
 
     # 获取唯一id
     def getid(self):
-        return time() * 1000
+        return str(time()).replace('.', '')
 
     def heartbeat(h):
         return h
 
     # 获取账号信息 wxid为用户id get other user's information
     def get_personal_detail(self, wxid):
-        qs = {
-            'id': self.getid(),
-            'type': self.PERSONAL_DETAIL,
-            'content': 'op:personal detail',
-            'wxid': wxid,
-        }
-        s = json.dumps(qs)
-        return s
+        uri = '/api/get_personal_detail'
+        return self.send_http(uri, wxjson.get_personal_detail(wxid))
 
     # 获取登陆的账号信息 和get_personal_detail不同于get_personal_detail是获取其他用户的 get self's imformation
     def get_personal_info(self):
-        qs = {
-            'id': self.getid(),
-            'type': self.PERSONAL_INFO,
-            'content': 'op:personal info',
-            'wxid': 'ROOT',
-        }
-        s = json.dumps(qs)
-        return s
+        uri = '/api/get_personal_info'
+        return self.send_http(uri, wxjson.get_personal_info())
 
     # 获取微信通讯录用户名字和wxid get wechat address list username and wxid
     def get_contact_list(self):
-        qs = {
-            'id': self.getid(),
-            'type': self.USER_LIST,
-            'roomid': 'null',
-            'wxid': 'null',
-            'content': 'null',
-            'nickname': 'null',
-            'ext': 'null'
-        }
-        s = json.dumps(qs)
-        return s
+        uri = '/api/getcontactlist'
+        return self.send_http(uri, wxjson.get_contact_list())
 
     # 获取群聊中用户昵称 wxid为群中要获取的用户id roomid为群id  get group's user's nickname
-    def get_chat_nick(self, wxid, roomid):
-        qs = {
-            'id': self.getid(),
-            'type': self.CHATROOM_MEMBER_NICK,
-            'wxid': wxid,
-            'roomid': roomid,
-            'content': 'null',
-            'nickname': 'null',
-            'ext': 'null'
-        }
-        s = json.dumps(qs)
-        return s
+    def get_chat_nick(self, roomid='null', wxid='ROOT'):
+        uri = 'api/getmembernick'
+        return self.send_http(uri, wxjson.get_user_nick(wxid))
+
+    # Alias of get_chat_nick
+    def get_user_nick(self, wxid):
+        return self.get_chat_nick(wxid=wxid)
 
     # 获取群聊中用户列表 wxid为群id
-    def get_chatroom_memberlist(self, wxid):
-        qs = {
-            'id': self.getid(),
-            'type': self.CHATROOM_MEMBER,
-            'roomid': 'null',
-            'wxid': wxid,
-            'content': 'null',
-            'nickname': 'null',
-            'ext': 'null'
-        }
-        s = json.dumps(qs)
-        return s
+    def get_chatroom_memberlist(self, roomid='null'):
+        uri = '/api/get_charroom_member_list'
+        return self.send_http(uri, wxjson.get_chatroom_memberlist(roomid))
 
-    ######## 其他 ########
-    def destroy_all(self):
-        qs = {
-            'id': self.getid(),
-            'type': self.DESTROY_ALL,
-            'content': 'none',
-            'wxid': 'node',
-        }
-        s = json.dumps(qs)
-        return s
 
+if __name__ == '__main__':
+    import pywxdll
+    import time
+
+    wx = pywxdll.Pywxdll('121.5.152.172', 5555)
+    wx.start()
+    time.sleep(5)
+    print(wx.get_personal_detail('wxid_9bgpqdiogma012'))
