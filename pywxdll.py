@@ -1,11 +1,36 @@
 import json
-from threading import Thread
-from time import time
+import threading
+from time import time, strftime
 
 import requests
 import websocket
 
 import pywxdll_json as wxjson
+
+HEART_BEAT = 5005
+RECV_TXT_MSG = 1
+RECV_PIC_MSG = 3
+NEW_FRIEND_REQUEST = 37
+RECV_TXT_CITE_MSG = 49
+PIC_MSG = 500
+AT_MSG = 550
+TXT_MSG = 555
+USER_LIST = 5000
+GET_USER_LIST_SUCCSESS = 5001
+GET_USER_LIST_FAIL = 5002
+ATTATCH_FILE = 5003
+CHATROOM_MEMBER = 5010
+CHATROOM_MEMBER_NICK = 5020
+DEBUG_SWITCH = 6000
+PERSONAL_INFO = 6500
+PERSONAL_DETAIL = 6550
+DESTROY_ALL = 9999
+JOIN_ROOM = 10000
+
+
+def logger(message):
+    now = strftime("%Y-%m-%d %X")
+    print(f'[{now}]:{message}')
 
 
 class Pywxdll:
@@ -16,7 +41,7 @@ class Pywxdll:
         self.msg_list = []
 
     def thread_start(self):  # 监听hook The thread for listeing
-        websocket.enableTrace(True)
+        websocket.enableTrace(False)  # 开启调试？
         ws = websocket.WebSocketApp(
             self.ws_url,
             on_open=self.on_open,
@@ -27,21 +52,26 @@ class Pywxdll:
         ws.run_forever()
 
     def start(self):  # 开始监听 Start listening for incoming message
-        wx = Pywxdll(self.ip, port=self.port)
-        thread = Thread(target=wx.thread_start)
-        thread.start()
+        wxt = threading.Thread(target=self.thread_start)
+        wxt.daemon = True
+        wxt.start()
 
     def on_open(self, ws):  # For websocket
-        return
+        logger('service open sucess')
 
     def on_message(self, ws, message):  # For websocket
-        self.msg_list.append(json.loads(message))
+        recieve = json.loads(message)
+        r_type = recieve['type']
+        if r_type == 5005:
+            logger('Hertbeat')
+        elif r_type == 1 or r_type == 3:
+            self.msg_list.append(self.recv_txt_handle(recieve))
 
     def on_error(self, ws, error):  # For websocket
-        print(error)
+        logger(message=error)
 
-    def on_close(self, ws, n1, n2):  # For websocket
-        print(f'{self.ws_url} closed')
+    def on_close(self, ws):  # For websocket
+        logger(f'{self.ws_url} closed')
 
     ######## Recieve ########
 
@@ -50,7 +80,7 @@ class Pywxdll:
         return self.msg_list
 
     # 返回一部分收到的信息 建议使用 参数num用于设置返回的数量 Return lastest messages, to prevent the msg_list being too long   Arg num is for set the number of returning message
-    def get_latest_messages(self, num):
+    def get_latest_messages(self, num=1):
         return self.msg_list[:num]
 
     # todo
@@ -74,14 +104,12 @@ class Pywxdll:
         url = f'http://{self.ip}:{self.port}/{uri}'
         rsp = requests.post(url, json={'para': base_data}, timeout=5)
         rsp = rsp.json()
-        try:
-            if 'content' in rsp and isinstance(rsp['content'], str):
-                try:
-                    rsp['content'] = json.loads(rsp['content'])
-                except:
-                    pass
-        except:
-            pass
+        if 'content' in rsp and isinstance(rsp['content'], str):
+            try:
+                rsp['content'] = json.loads(rsp['content'])
+            except:
+                pass
+        return rsp
 
     # 发送txt消息到个人或群 wxid为用户id或群id content为发送内容  Send txt message to a wxid(perosnal or group)
     def send_txt_msg(self, wxid, content: str):
@@ -128,25 +156,56 @@ class Pywxdll:
         return self.send_http(uri, wxjson.get_contact_list())
 
     # 获取群聊中用户昵称 wxid为群中要获取的用户id roomid为群id  get group's user's nickname
-    def get_chat_nick(self, roomid='null', wxid='ROOT'):
+    def get_chatroom_nick(self, roomid='null', wxid='ROOT'):
         uri = 'api/getmembernick'
-        return self.send_http(uri, wxjson.get_user_nick(wxid))
+        return self.send_http(uri, wxjson.get_chatroom_nick(roomid, wxid))
 
     # Alias of get_chat_nick
     def get_user_nick(self, wxid):
-        return self.get_chat_nick(wxid=wxid)
+        return self.get_chatroom_nick(wxid=wxid)
 
     # 获取群聊中用户列表 wxid为群id
     def get_chatroom_memberlist(self, roomid='null'):
         uri = '/api/get_charroom_member_list'
         return self.send_http(uri, wxjson.get_chatroom_memberlist(roomid))
 
+    ######## 信息处理 ########
 
+    def recv_txt_handle(self, recieve):
+        out = {}
+        out['content'] = recieve['content']
+        out['id'] = recieve['id']
+        out['time'] = recieve['time']
+        out['type'] = recieve['type']
+        out['wxid'] = recieve['wxid']
+        out['nick'] = self.get_user_nick(recieve['wxid'])['content']['nick']
+        logger('收到消息:' + str(out))
+        return out
+
+
+# tests
+'''
 if __name__ == '__main__':
     import pywxdll
-    import time
 
-    wx = pywxdll.Pywxdll('121.5.152.172', 5555)
-    wx.start()
-    time.sleep(5)
-    print(wx.get_personal_detail('wxid_9bgpqdiogma012'))
+    wx = pywxdll.Pywxdll('127.0.0.1', 5555)
+    wxid = ''  # fill wxid
+    chatroom = ''  # fill chatroom id
+    pic_path = ''  # fill path of picture
+    file_path = ''  # fill path of file
+    print(wx.send_txt_msg(wxid, 'succees'))  # send txt test
+    print(wx.send_txt_msg(chatroom, 'succees'))
+    print(wx.send_pic_msg(wxid, pic_path))  # send pic test
+    print(wx.send_pic_msg(chatroom, pic_path))
+    print(wx.send_attach_msg(wxid, file_path))  # send attachment test
+    print(wx.send_attach_msg(chatroom, file_path))
+    print(wx.send_at_msg(chatroom, wxid, 'test', 'test'))  # send at test
+
+    print(wx.get_personal_detail(wxid))  # get perosnal detail test
+    print(wx.get_personal_info())
+    print(wx.get_chat_nick(chatroom, wxid))  # nick test
+    print(wx.get_user_nick(chatroom, wxid))
+    print(wx.get_chatroom_memberlist(chatroom))  # member list check
+
+    wx.send_txt_msg(wxid, str(wx.get_chatroom_memberlist(chatroom)))
+'''
