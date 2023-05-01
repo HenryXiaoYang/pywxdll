@@ -146,9 +146,11 @@ class Pywxdll:
         return self.send_http(uri, wxjson.get_personal_detail(wxid))
 
     # 获取登陆的账号信息 和get_personal_detail不同于get_personal_detail是获取其他用户的 get self's imformation
+    # 接口有错误，暂时禁用
+    '''    
     def get_personal_info(self):
         uri = '/api/get_personal_info'
-        return self.send_http(uri, wxjson.get_personal_info())
+        return self.send_http(uri, wxjson.get_personal_info())'''
 
     # 获取微信通讯录用户名字和wxid get wechat address list username and wxid
     def get_contact_list(self):
