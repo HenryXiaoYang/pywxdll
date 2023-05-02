@@ -23,7 +23,7 @@ JOIN_ROOM = 10000
 
 
 # 发送txt消息到个人或群 wxid为用户id或群id content为发送内容  Send txt message to a wxid(perosnal or group)
-def send_txt_msg(wxid, content: str):
+def json_send_txt_msg(wxid, content: str):
     qs = {
         'id': getid(),
         'type': TXT_MSG,
@@ -37,7 +37,7 @@ def send_txt_msg(wxid, content: str):
 
 
 # 发送图片信息 wxid为用户id或群id path为发送图片的路径（建议用绝对路径） Send picture to wxid(perosnal or group)
-def send_pic_msg(wxid, path: str):
+def json_send_pic_msg(wxid, path: str):
     qs = {
         'id': getid(),
         'type': PIC_MSG,
@@ -52,7 +52,7 @@ def send_pic_msg(wxid, path: str):
 
 
 # 发送@信息 roomid为群id wxid为用户id nickname为@的人昵称 content为发送内容 send @ message
-def send_at_msg(roomid, wxid, nickname: str, content: str):
+def json_send_at_msg(roomid, wxid, nickname: str, content: str):
     qs = {
         'id': getid(),
         'type': AT_MSG,
@@ -67,7 +67,7 @@ def send_at_msg(roomid, wxid, nickname: str, content: str):
 
 
 # 发送文件 wxid为用户id或者群id path为文件的路径 send attachment to chat or group
-def send_attach_msg(wxid, path):
+def json_send_attach_msg(wxid, path):
     qs = {
         'id': getid(),
         'type': ATTATCH_FILE,
@@ -89,12 +89,12 @@ def getid():
     return str(time()).replace('.', '')
 
 
-def heartbeat(h):
+def json_heartbeat(h):
     return h
 
 
 # 获取账号信息 wxid为用户id get other user's information
-def get_personal_detail(wxid):
+def json_get_personal_detail(wxid):
     qs = {
         'id': getid(),
         'type': PERSONAL_DETAIL,
@@ -105,7 +105,7 @@ def get_personal_detail(wxid):
 
 
 # 获取登陆的账号信息 和get_personal_detail不同于get_personal_detail是获取其他用户的 get 's imformation
-def get_personal_info():
+def json_get_personal_info():
     qs = {
         'id': getid(),
         'type': PERSONAL_INFO,
@@ -116,7 +116,7 @@ def get_personal_info():
 
 
 # 获取微信通讯录用户名字和wxid get wechat address list username and wxid
-def get_contact_list():
+def json_get_contact_list():
     qs = {
         'id': getid(),
         'type': USER_LIST,
@@ -127,7 +127,7 @@ def get_contact_list():
 
 
 # 获取群聊中用户昵称 wxid为群中要获取的用户id roomid为群id  get group's user's nickname
-def get_chatroom_nick(roomid='null', wxid='ROOT'):
+def json_get_chatroom_nick(roomid='null', wxid='ROOT'):
     if not roomid:
         roomid = 'null'
     if wxid == 'null' and roomid == 'null':
@@ -141,12 +141,12 @@ def get_chatroom_nick(roomid='null', wxid='ROOT'):
     return json.dumps(qs)
 
 
-def get_user_nick(wxid):
-    return get_chatroom_nick(wxid=wxid)
+def json_get_user_nick(wxid):
+    return json_get_chatroom_nick(wxid=wxid)
 
 
 # 获取群聊中用户列表 wxid为群id
-def get_chatroom_memberlist(roomid='null'):
+def json_get_chatroom_memberlist(roomid='null'):
     qs = {
         'id': getid(),
         'type': CHATROOM_MEMBER,
@@ -158,7 +158,7 @@ def get_chatroom_memberlist(roomid='null'):
 
 
 ######## 其他 ########
-def destroy_all():
+def json_destroy_all():
     qs = {
         'id': getid(),
         'type': DESTROY_ALL,

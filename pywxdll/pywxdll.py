@@ -1,11 +1,10 @@
-import json
 import threading
-from time import time, strftime
+from time import strftime
 
 import requests
 import websocket
 
-import pywxdll_json as wxjson
+from .pywxdll_json import *
 
 HEART_BEAT = 5005
 RECV_TXT_MSG = 1
@@ -92,7 +91,7 @@ class Pywxdll:
         if isinstance(data, str) or isinstance(data, bytes):
             data = json.loads(data)
         base_data = {
-            'id': wxjson.getid(),
+            'id': getid(),
             'type': 'null',
             'roomid': 'null',
             'wxid': 'null',
@@ -114,22 +113,22 @@ class Pywxdll:
     # 发送txt消息到个人或群 wxid为用户id或群id content为发送内容  Send txt message to a wxid(perosnal or group)
     def send_txt_msg(self, wxid, content: str):
         uri = '/api/sendtxtmsg'
-        return self.send_http(uri, wxjson.send_txt_msg(wxid, content))
+        return self.send_http(uri, json_send_txt_msg(wxid, content))
 
     # 发送图片信息 wxid为用户id或群id path为发送图片的路径（建议用绝对路径） Send picture to wxid(perosnal or group)
     def send_pic_msg(self, wxid, path: str):
         uri = '/api/sendpic'
-        return self.send_http(uri, wxjson.send_pic_msg(wxid, path))
+        return self.send_http(uri, json_send_pic_msg(wxid, path))
 
     # 发送@信息 roomid为群id wxid为用户id nickname为@的人昵称 content为发送内容 send @ message
     def send_at_msg(self, roomid, wxid, nickname: str, content: str):
         uri = '/api/sendatmsg'
-        return self.send_http(uri, wxjson.send_at_msg(roomid, wxid, nickname, content))
+        return self.send_http(uri, json_send_at_msg(roomid, wxid, nickname, content))
 
     # 发送文件 wxid为用户id或者群id path为文件的路径 send attachment to chat or group
     def send_attach_msg(self, wxid, path):
         uri = '/api/sendattatch'
-        return self.send_http(uri, wxjson.send_attach_msg(wxid, path))
+        return self.send_http(uri, json_send_attach_msg(wxid, path))
 
     ######## 获取信息 ########
 
@@ -143,24 +142,24 @@ class Pywxdll:
     # 获取账号信息 wxid为用户id get other user's information
     def get_personal_detail(self, wxid):
         uri = '/api/get_personal_detail'
-        return self.send_http(uri, wxjson.get_personal_detail(wxid))
+        return self.send_http(uri, json_get_personal_detail(wxid))
 
     # 获取登陆的账号信息 和get_personal_detail不同于get_personal_detail是获取其他用户的 get self's imformation
     # 接口有错误，暂时禁用
     '''    
     def get_personal_info(self):
         uri = '/api/get_personal_info'
-        return self.send_http(uri, wxjson.get_personal_info())'''
+        return self.send_http(uri, get_personal_info())'''
 
     # 获取微信通讯录用户名字和wxid get wechat address list username and wxid
     def get_contact_list(self):
         uri = '/api/getcontactlist'
-        return self.send_http(uri, wxjson.get_contact_list())
+        return self.send_http(uri, json_get_contact_list())
 
     # 获取群聊中用户昵称 wxid为群中要获取的用户id roomid为群id  get group's user's nickname
     def get_chatroom_nick(self, roomid='null', wxid='ROOT'):
         uri = 'api/getmembernick'
-        return self.send_http(uri, wxjson.get_chatroom_nick(roomid, wxid))
+        return self.send_http(uri, json_get_chatroom_nick(roomid, wxid))
 
     # Alias of get_chat_nick
     def get_user_nick(self, wxid):
@@ -169,7 +168,7 @@ class Pywxdll:
     # 获取群聊中用户列表 wxid为群id
     def get_chatroom_memberlist(self, roomid='null'):
         uri = '/api/get_charroom_member_list'
-        return self.send_http(uri, wxjson.get_chatroom_memberlist(roomid))
+        return self.send_http(uri, json_get_chatroom_memberlist(roomid))
 
     ######## 信息处理 ########
 
@@ -201,13 +200,10 @@ if __name__ == '__main__':
     print(wx.send_pic_msg(chatroom, pic_path))
     print(wx.send_attach_msg(wxid, file_path))  # send attachment test
     print(wx.send_attach_msg(chatroom, file_path))
-    print(wx.send_at_msg(chatroom, wxid, 'test', 'test'))  # send at test
+    print(wx.send_at_msg(chatroom, wxid, 'test', 'test')) # send at test
 
     print(wx.get_personal_detail(wxid))  # get perosnal detail test
     print(wx.get_personal_info())
     print(wx.get_chat_nick(chatroom, wxid))  # nick test
     print(wx.get_user_nick(chatroom, wxid))
-    print(wx.get_chatroom_memberlist(chatroom))  # member list check
-
-    wx.send_txt_msg(wxid, str(wx.get_chatroom_memberlist(chatroom)))
-'''
+    print(wx.get_chatroom_memberlist(chatroom))  # member list check'''
