@@ -11,6 +11,8 @@ A Python package for wechat dll hook 一个用于微信Dll Hook的Python库
 
 Currently writing documents, please use docker env(link: https://github.com/ChisBread/wechat-service/)
 
+请在这个docker环境下运行：https://github.com/ChisBread/wechat-service/
+
 # Credits
 
 https://github.com/ChisBread/wechat-service/

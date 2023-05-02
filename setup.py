@@ -18,10 +18,10 @@ URL = 'https://github.com/HenryXiaoYang/pywxdll'
 EMAIL = 'henryyang666@hotmal.com'
 AUTHOR = 'HenryXiaoYang'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 # What packages are required for this module to be executed?
-REQUIRED = ['websocket-client']
+REQUIRED = ['websocket-client', 'requests']
 
 # What packages are optional?
 EXTRAS = {
