@@ -101,7 +101,10 @@ class Pywxdll:
         }
         base_data.update(data)
         url = f'http://{self.ip}:{self.port}/{uri}'
-        rsp = requests.post(url, json={'para': base_data}, timeout=5)
+        try:
+            rsp = requests.post(url, json={'para': base_data})
+        except:
+            logger('发送信息失败！信息：', base_data)
         rsp = rsp.json()
         if 'content' in rsp and isinstance(rsp['content'], str):
             try:
