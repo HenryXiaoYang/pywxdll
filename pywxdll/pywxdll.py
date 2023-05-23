@@ -1,5 +1,5 @@
 import threading
-from time import strftime
+import time
 
 import requests
 import websocket
@@ -27,11 +27,6 @@ DESTROY_ALL = 9999
 JOIN_ROOM = 10000
 
 
-def logger(message):
-    now = strftime("%Y-%m-%d %X")
-    print(f'[{now}]:{message}')
-
-
 class Pywxdll:
     def __init__(self, ip='127.0.0.1', port=5555):  # 微信hook服务器的ip地址和端口 The ip and port for wechat hook server
         self.ip = ip
@@ -56,21 +51,21 @@ class Pywxdll:
         wxt.start()
 
     def on_open(self, ws):  # For websocket
-        logger('service open sucess')
+        pass
 
     def on_message(self, ws, message):  # For websocket
         recieve = json.loads(message)
         r_type = recieve['type']
         if r_type == 5005:
-            logger('Hertbeat')
+            pass
         elif r_type == 1 or r_type == 3:
             self.msg_list.append(self.recv_txt_handle(recieve))
 
     def on_error(self, ws, error):  # For websocket
-        logger(message=error)
+        print(error)
 
     def on_close(self, ws):  # For websocket
-        logger(f'{self.ws_url} closed')
+        pass
 
     ######## Recieve ########
 
@@ -104,7 +99,7 @@ class Pywxdll:
         try:
             rsp = requests.post(url, json={'para': base_data})
         except:
-            logger('发送信息失败！信息：', base_data)
+            print('发送信息失败！信息：', base_data)
         rsp = rsp.json()
         if 'content' in rsp and isinstance(rsp['content'], str):
             try:
@@ -137,7 +132,7 @@ class Pywxdll:
 
     # 获取唯一id
     def getid(self):
-        return str(time()).replace('.', '')
+        return time.time_ns()
 
     def heartbeat(h):
         return h
@@ -183,30 +178,4 @@ class Pywxdll:
         out['type'] = recieve['type']
         out['wxid'] = recieve['wxid']
         out['nick'] = self.get_user_nick(recieve['wxid'])['content']['nick']
-        logger('收到消息:' + str(out))
         return out
-
-
-# tests
-'''
-if __name__ == '__main__':
-    import pywxdll
-
-    wx = pywxdll.Pywxdll('127.0.0.1', 5555)
-    wxid = ''  # fill wxid
-    chatroom = ''  # fill chatroom id
-    pic_path = ''  # fill path of picture
-    file_path = ''  # fill path of file
-    print(wx.send_txt_msg(wxid, 'succees'))  # send txt test
-    print(wx.send_txt_msg(chatroom, 'succees'))
-    print(wx.send_pic_msg(wxid, pic_path))  # send pic test
-    print(wx.send_pic_msg(chatroom, pic_path))
-    print(wx.send_attach_msg(wxid, file_path))  # send attachment test
-    print(wx.send_attach_msg(chatroom, file_path))
-    print(wx.send_at_msg(chatroom, wxid, 'test', 'test')) # send at test
-
-    print(wx.get_personal_detail(wxid))  # get perosnal detail test
-    print(wx.get_personal_info())
-    print(wx.get_chat_nick(chatroom, wxid))  # nick test
-    print(wx.get_user_nick(chatroom, wxid))
-    print(wx.get_chatroom_memberlist(chatroom))  # member list check'''

@@ -1,5 +1,5 @@
 import json
-from time import time
+import time
 
 HEART_BEAT = 5005
 RECV_TXT_MSG = 1
@@ -86,7 +86,7 @@ def json_send_attach_msg(wxid, path):
 
 # 获取唯一id
 def getid():
-    return str(time()).replace('.', '')
+    return time.time_ns()
 
 
 def json_heartbeat(h):
