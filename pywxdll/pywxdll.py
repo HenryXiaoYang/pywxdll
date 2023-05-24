@@ -1,5 +1,4 @@
 import threading
-import time
 
 import requests
 import websocket
@@ -171,6 +170,7 @@ class Pywxdll:
     ######## 信息处理 ########
 
     def recv_txt_handle(self, recieve):
+        '''
         out = {}
         out['content'] = recieve['content']
         out['id'] = recieve['id']
@@ -178,4 +178,5 @@ class Pywxdll:
         out['type'] = recieve['type']
         out['wxid'] = recieve['wxid']
         out['nick'] = self.get_user_nick(recieve['wxid'])['content']['nick']
-        return out
+        '''
+        return recieve
