@@ -86,7 +86,8 @@ def json_send_attach_msg(wxid, path):
 
 # 获取唯一id
 def getid():
-    return time.time_ns()
+    # return str(time.time()).replace('.', '')
+    return str(time.time_ns())
 
 
 def json_heartbeat(h):

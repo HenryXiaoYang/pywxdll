@@ -56,7 +56,7 @@ class Pywxdll:
         recieve = json.loads(message)
         r_type = recieve['type']
         if r_type == 5005:
-            pass
+            print('Heartbeat')
         elif r_type == 1 or r_type == 3:
             self.msg_list.append(self.recv_txt_handle(recieve))
 
@@ -69,7 +69,7 @@ class Pywxdll:
     ######## Recieve ########
 
     # 返回所有收到的信息 不建议使用 Return all the messages recieved  #USE IN CAUTION!
-    def get_all_messages(self):
+    '''def get_all_messages(self):
         return self.msg_list
 
     # 返回一部分收到的信息 建议使用 参数num用于设置返回的数量 Return lastest messages, to prevent the msg_list being too long   Arg num is for set the number of returning message
@@ -78,6 +78,7 @@ class Pywxdll:
 
     # todo
     #  add function for returning only groupchat message / only personalchat message / message for specific group or person
+'''
 
     ######## Send ########
 
@@ -131,7 +132,8 @@ class Pywxdll:
 
     # 获取唯一id
     def getid(self):
-        return time.time_ns()
+        # return str(time.time()).replace('.', '')
+        return str(time.time_ns())
 
     def heartbeat(h):
         return h
