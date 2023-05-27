@@ -56,12 +56,12 @@ class Pywxdll:
         recieve = json.loads(message)
         r_type = recieve['type']
         if r_type == 5005:
-            print('Heartbeat')
+            pass
         elif r_type == 1 or r_type == 3:
             self.msg_list.append(self.recv_txt_handle(recieve))
 
     def on_error(self, ws, error):  # For websocket
-        print(error)
+        raise error
 
     def on_close(self, ws):  # For websocket
         pass
