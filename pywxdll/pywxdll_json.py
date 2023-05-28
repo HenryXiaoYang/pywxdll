@@ -29,7 +29,7 @@ def json_send_txt_msg(wxid, content: str):
         'type': TXT_MSG,
         'roomid': 'null',
         'wxid': wxid,
-        'content': str(content),
+        'content': content,
         'nickname': 'null',
         'ext': 'null'
     }
@@ -58,7 +58,7 @@ def json_send_at_msg(roomid, wxid, nickname: str, content: str):
         'type': AT_MSG,
         'roomid': roomid,
         'wxid': wxid,
-        'content': str(content),
+        'content': content,
         'nickname': nickname,
         'ext': 'null'
     }
