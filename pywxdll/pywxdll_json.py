@@ -25,7 +25,7 @@ JOIN_ROOM = 10000
 # 发送txt消息到个人或群 wxid为用户id或群id content为发送内容  Send txt message to a wxid(perosnal or group)
 def json_send_txt_msg(wxid, content: str):
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': TXT_MSG,
         'roomid': 'null',
         'wxid': wxid,
@@ -39,7 +39,7 @@ def json_send_txt_msg(wxid, content: str):
 # 发送图片信息 wxid为用户id或群id path为发送图片的路径（建议用绝对路径） Send picture to wxid(perosnal or group)
 def json_send_pic_msg(wxid, path: str):
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': PIC_MSG,
         'wxid': wxid,
         'roomid': 'null',
@@ -54,7 +54,7 @@ def json_send_pic_msg(wxid, path: str):
 # 发送@信息 roomid为群id wxid为用户id nickname为@的人昵称 content为发送内容 send @ message
 def json_send_at_msg(roomid, wxid, nickname: str, content: str):
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': AT_MSG,
         'roomid': roomid,
         'wxid': wxid,
@@ -69,7 +69,7 @@ def json_send_at_msg(roomid, wxid, nickname: str, content: str):
 # 发送文件 wxid为用户id或者群id path为文件的路径 send attachment to chat or group
 def json_send_attach_msg(wxid, path):
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': ATTATCH_FILE,
         'wxid': wxid,
         'roomid': 'null',
@@ -85,9 +85,8 @@ def json_send_attach_msg(wxid, path):
 ######## 获取信息 ########
 
 # 获取唯一id
-def getid():
-    # return str(time.time()).replace('.', '')
-    return str(time.time_ns())
+def _getid():
+    return time.strftime("%Y%m%d%H%M%S", time.localtime())
 
 
 def json_heartbeat(h):
@@ -97,7 +96,7 @@ def json_heartbeat(h):
 # 获取账号信息 wxid为用户id get other user's information
 def json_get_personal_detail(wxid):
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': PERSONAL_DETAIL,
         'content': 'op:personal detail',
         'wxid': wxid,
@@ -108,7 +107,7 @@ def json_get_personal_detail(wxid):
 # 获取登陆的账号信息 和get_personal_detail不同于get_personal_detail是获取其他用户的 get 's imformation
 def json_get_personal_info():
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': PERSONAL_INFO,
         'content': 'op:personal info',
         'wxid': 'ROOT',
@@ -119,7 +118,7 @@ def json_get_personal_info():
 # 获取微信通讯录用户名字和wxid get wechat address list username and wxid
 def json_get_contact_list():
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': USER_LIST,
         'content': 'user list',
         'wxid': 'null',
@@ -134,7 +133,7 @@ def json_get_chatroom_nick(roomid='null', wxid='ROOT'):
     if wxid == 'null' and roomid == 'null':
         raise ValueError("wxid和roomid不能同时为'null'")
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': CHATROOM_MEMBER_NICK,
         'roomid': roomid,
         'wxid': wxid,
@@ -149,7 +148,7 @@ def json_get_user_nick(wxid):
 # 获取群聊中用户列表 wxid为群id
 def json_get_chatroom_memberlist(roomid='null'):
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': CHATROOM_MEMBER,
         'wxid': 'null',
         'roomid': roomid,
@@ -161,7 +160,7 @@ def json_get_chatroom_memberlist(roomid='null'):
 ######## 其他 ########
 def json_destroy_all():
     qs = {
-        'id': getid(),
+        'id': _getid(),
         'type': DESTROY_ALL,
         'content': 'none',
         'wxid': 'node',

@@ -33,60 +33,46 @@ class Pywxdll:
         self.ws_url = f'ws://{ip}:{port}'  # websocket url
         self.msg_list = []
 
-    def thread_start(self):  # 监听hook The thread for listeing
+    def _thread_start(self):  # 监听hook The thread for listeing
         websocket.enableTrace(False)  # 开启调试？
         ws = websocket.WebSocketApp(
             self.ws_url,
-            on_open=self.on_open,
-            on_message=self.on_message,
-            on_error=self.on_error,
-            on_close=self.on_close
+            on_open=self._on_open,
+            on_message=self._on_message,
+            on_error=self._on_error,
+            on_close=self._on_close
         )
         ws.run_forever()
 
     def start(self):  # 开始监听 Start listening for incoming message
-        wxt = threading.Thread(target=self.thread_start)
+        wxt = threading.Thread(target=self._thread_start)
         wxt.daemon = True
         wxt.start()
 
-    def on_open(self, ws):  # For websocket
+    def _on_open(self, ws):  # For websocket
         pass
 
-    def on_message(self, ws, message):  # For websocket
+    def _on_message(self, ws, message):  # For websocket
         recieve = json.loads(message)
         r_type = recieve['type']
         if r_type == 5005:
             pass
-        elif r_type == 1 or r_type == 3:
+        elif r_type == 1 or r_type == 3 or r_type == 49:
             self.msg_list.append(self.recv_txt_handle(recieve))
 
-    def on_error(self, ws, error):  # For websocket
+    def _on_error(self, ws, error):  # For websocket
         raise error
 
-    def on_close(self, ws):  # For websocket
+    def _on_close(self, ws):  # For websocket
         pass
 
-    ######## Recieve ########
-
-    # 返回所有收到的信息 不建议使用 Return all the messages recieved  #USE IN CAUTION!
-    '''def get_all_messages(self):
-        return self.msg_list
-
-    # 返回一部分收到的信息 建议使用 参数num用于设置返回的数量 Return lastest messages, to prevent the msg_list being too long   Arg num is for set the number of returning message
-    def get_latest_messages(self, num=1):
-        return self.msg_list[:num]
-
-    # todo
-    #  add function for returning only groupchat message / only personalchat message / message for specific group or person
-'''
 
     ######## Send ########
-
-    def send_http(self, uri, data):
+    def _send_http(self, uri, data):
         if isinstance(data, str) or isinstance(data, bytes):
             data = json.loads(data)
         base_data = {
-            'id': getid(),
+            'id': self._getid(),
             'type': 'null',
             'roomid': 'null',
             'wxid': 'null',
@@ -107,77 +93,109 @@ class Pywxdll:
                 pass
         return rsp
 
-    # 发送txt消息到个人或群 wxid为用户id或群id content为发送内容  Send txt message to a wxid(perosnal or group)
-    def send_txt_msg(self, wxid, content: str):
+    def send_txt_msg(self, wxid: str, content: str):
+        '''
+        发送txt消息到朋友或群 Send txt message to a friend or chatroom
+        :param wxid: 微信号(以wxid_开头)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
+        :param content: 要发送的文本 content to send
+        :return: Dictionary
+        '''
         uri = '/api/sendtxtmsg'
-        return self.send_http(uri, json_send_txt_msg(wxid, content))
+        return self._send_http(uri, json_send_txt_msg(wxid, content))
 
-    # 发送图片信息 wxid为用户id或群id path为发送图片的路径（建议用绝对路径） Send picture to wxid(perosnal or group)
-    def send_pic_msg(self, wxid, path: str):
+    def send_pic_msg(self, wxid: str, path: str):
+        '''
+        发送图片信息发送txt消息到朋友或群 Send picture to a friend or chatroom
+        :param wxid: 微信号(以wxid_开头)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
+        :param path: 图片路径 path to picture
+        :return:
+        '''
         uri = '/api/sendpic'
-        return self.send_http(uri, json_send_pic_msg(wxid, path))
+        return self._send_http(uri, json_send_pic_msg(wxid, path))
 
-    # 发送@信息 roomid为群id wxid为用户id nickname为@的人昵称 content为发送内容 send @ message
-    def send_at_msg(self, roomid, wxid, nickname: str, content: str):
+    def send_at_msg(self, roomid: str, wxid: str, nickname: str, content: str):
+        '''
+        发送@信息到群  send @ message to chatroom
+        :param roomid: 群号(以@chatroom结尾) groupchatid(end with@chatroom)
+        :param wxid: 要@的人的微信号(以wxid_开头) wechatid(start with wxid_) of person you want to @
+        :param nickname: 要@的人的昵称 nickname of person you want to @
+        :param content: 要发送的文本 content to send
+        :return:
+        '''
         uri = '/api/sendatmsg'
-        return self.send_http(uri, json_send_at_msg(roomid, wxid, nickname, content))
+        return self._send_http(uri, json_send_at_msg(roomid, wxid, nickname, content))
 
-    # 发送文件 wxid为用户id或者群id path为文件的路径 send attachment to chat or group
-    def send_attach_msg(self, wxid, path):
+    def send_attach_msg(self, wxid: str, path: str):
+        '''
+        发送文件到朋友或群 send attachment to friend or chatroom
+        :param wxid: 微信号(以wxid_开头)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
+        :param path: 文件的路径 path to file
+        :return:
+        '''
         uri = '/api/sendattatch'
-        return self.send_http(uri, json_send_attach_msg(wxid, path))
+        return self._send_http(uri, json_send_attach_msg(wxid, path))
 
     ######## 获取信息 ########
 
     # 获取唯一id
-    def getid(self):
-        # return str(time.time()).replace('.', '')
-        return str(time.time_ns())
+    def _getid(self):
+        return time.strftime("%Y%m%d%H%M%S", time.localtime())
 
     def heartbeat(h):
         return h
 
-    # 获取账号信息 wxid为用户id get other user's information
-    def get_personal_detail(self, wxid):
+    def get_personal_detail(self, wxid: str):
+        '''
+        获取其他账号信息 get other user's information
+        :param wxid: 微信号(以wxid_开头) wechatid(start with wxid_)
+        :return:
+        '''
         uri = '/api/get_personal_detail'
-        return self.send_http(uri, json_get_personal_detail(wxid))
+        return self._send_http(uri, json_get_personal_detail(wxid))['content']
 
-    # 获取登陆的账号信息 和get_personal_detail不同于get_personal_detail是获取其他用户的 get self's imformation
-    # 接口有错误，暂时禁用
-    '''    
-    def get_personal_info(self):
-        uri = '/api/get_personal_info'
-        return self.send_http(uri, get_personal_info())'''
-
-    # 获取微信通讯录用户名字和wxid get wechat address list username and wxid
     def get_contact_list(self):
+        '''
+        获取微信通讯录用户名字和wxid get wechat address list username and wxid
+        :return: Dictionary
+        '''
         uri = '/api/getcontactlist'
-        return self.send_http(uri, json_get_contact_list())
+        return self._send_http(uri, json_get_contact_list())['content']
 
-    # 获取群聊中用户昵称 wxid为群中要获取的用户id roomid为群id  get group's user's nickname
-    def get_chatroom_nick(self, roomid='null', wxid='ROOT'):
+    def get_chatroom_nickname(self, roomid: str = 'null', wxid: str = 'ROOT'):
+        '''
+        获取群聊中用户昵称 Get chatroom's user's nickname
+        :param roomid: 群号(以@chatroom结尾) groupchatid(end with@chatroom)
+        :param wxid: 微信号(以wxid_开头) wechatid(start with wxid_)
+        :return: Dictionary
+        '''
         uri = 'api/getmembernick'
-        return self.send_http(uri, json_get_chatroom_nick(roomid, wxid))
+        return self._send_http(uri, json_get_chatroom_nick(roomid, wxid))['content']
 
-    # Alias of get_chat_nick
-    def get_user_nick(self, wxid):
-        return self.get_chatroom_nick(wxid=wxid)
+    def get_user_nickname(self, wxid: str):
+        '''
+        获取朋友昵称 Get friend's nickname
+        :param wxid: 微信号(以wxid_开头) wechatid(start with wxid_)
+        :return: Dictionary
+        '''
+        return self.get_chatroom_nickname(wxid=wxid)
 
-    # 获取群聊中用户列表 wxid为群id
-    def get_chatroom_memberlist(self, roomid='null'):
+    def get_chatroom_memberlist(self, roomid: str = 'null'):
+        '''
+        获取群聊中用户列表 Get chatroom member list
+        :param roomid: 群号(以@chatroom结尾) groupchatid(end with@chatroom)
+        :return: List or Dictionary
+        '''
         uri = '/api/get_charroom_member_list'
-        return self.send_http(uri, json_get_chatroom_memberlist(roomid))
+        result = self._send_http(uri, json_get_chatroom_memberlist(roomid))['content']
+        if roomid == 'null':
+            return result
+        else:
+            for i in result:
+                if i['room_id'] == roomid:
+                    return i
+            return result
 
     ######## 信息处理 ########
 
     def recv_txt_handle(self, recieve):
-        '''
-        out = {}
-        out['content'] = recieve['content']
-        out['id'] = recieve['id']
-        out['time'] = recieve['time']
-        out['type'] = recieve['type']
-        out['wxid'] = recieve['wxid']
-        out['nick'] = self.get_user_nick(recieve['wxid'])['content']['nick']
-        '''
         return recieve
