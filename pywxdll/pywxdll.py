@@ -28,15 +28,19 @@ JOIN_ROOM = 10000
 
 class Pywxdll:
     def __init__(self, ip='127.0.0.1', port=5555):  # 微信hook服务器的ip地址和端口 The ip and port for wechat hook server
+        '''
+        :param ip:
+        :param port:
+        '''
         self.ip = ip
         self.port = port
-        self.ws_url = f'ws://{ip}:{port}'  # websocket url
+        self._ws_url = f'ws://{ip}:{port}'  # websocket url
         self.msg_list = []
 
     def _thread_start(self):  # 监听hook The thread for listeing
         websocket.enableTrace(False)  # 开启调试？
         ws = websocket.WebSocketApp(
-            self.ws_url,
+            self._ws_url,
             on_open=self._on_open,
             on_message=self._on_message,
             on_error=self._on_error,
@@ -45,6 +49,10 @@ class Pywxdll:
         ws.run_forever()
 
     def start(self):  # 开始监听 Start listening for incoming message
+        '''
+        开始监听微信消息 Start listening for incoming message
+        :return:
+        '''
         wxt = threading.Thread(target=self._thread_start)
         wxt.daemon = True
         wxt.start()
@@ -58,14 +66,13 @@ class Pywxdll:
         if r_type == 5005:
             pass
         elif r_type == 1 or r_type == 3 or r_type == 49:
-            self.msg_list.append(self.recv_txt_handle(recieve))
+            self.msg_list.append(self._recv_txt_handle(recieve))
 
     def _on_error(self, ws, error):  # For websocket
         raise error
 
     def _on_close(self, ws):  # For websocket
         pass
-
 
     ######## Send ########
     def _send_http(self, uri, data):
@@ -96,7 +103,7 @@ class Pywxdll:
     def send_txt_msg(self, wxid: str, content: str):
         '''
         发送txt消息到朋友或群 Send txt message to a friend or chatroom
-        :param wxid: 微信号(以wxid_开头)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
+        :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
         :param content: 要发送的文本 content to send
         :return: Dictionary
         '''
@@ -106,7 +113,7 @@ class Pywxdll:
     def send_pic_msg(self, wxid: str, path: str):
         '''
         发送图片信息发送txt消息到朋友或群 Send picture to a friend or chatroom
-        :param wxid: 微信号(以wxid_开头)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
+        :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
         :param path: 图片路径 path to picture
         :return:
         '''
@@ -117,8 +124,8 @@ class Pywxdll:
         '''
         发送@信息到群  send @ message to chatroom
         :param roomid: 群号(以@chatroom结尾) groupchatid(end with@chatroom)
-        :param wxid: 要@的人的微信号(以wxid_开头) wechatid(start with wxid_) of person you want to @
-        :param nickname: 要@的人的昵称 nickname of person you want to @
+        :param wxid: 要@的人的wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了) wechatid(start with wxid_) of person you want to @
+        :param nickname: 要@的人的昵称，可随意修改 nickname of person you want to @
         :param content: 要发送的文本 content to send
         :return:
         '''
@@ -128,7 +135,7 @@ class Pywxdll:
     def send_attach_msg(self, wxid: str, path: str):
         '''
         发送文件到朋友或群 send attachment to friend or chatroom
-        :param wxid: 微信号(以wxid_开头)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
+        :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
         :param path: 文件的路径 path to file
         :return:
         '''
@@ -147,8 +154,8 @@ class Pywxdll:
     def get_personal_detail(self, wxid: str):
         '''
         获取其他账号信息 get other user's information
-        :param wxid: 微信号(以wxid_开头) wechatid(start with wxid_)
-        :return:
+        :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了) wechatid(start with wxid_)
+        :return: Dictionary
         '''
         uri = '/api/get_personal_detail'
         return self._send_http(uri, json_get_personal_detail(wxid))['content']
@@ -165,7 +172,7 @@ class Pywxdll:
         '''
         获取群聊中用户昵称 Get chatroom's user's nickname
         :param roomid: 群号(以@chatroom结尾) groupchatid(end with@chatroom)
-        :param wxid: 微信号(以wxid_开头) wechatid(start with wxid_)
+        :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了) wechatid(start with wxid_)
         :return: Dictionary
         '''
         uri = 'api/getmembernick'
@@ -174,7 +181,7 @@ class Pywxdll:
     def get_user_nickname(self, wxid: str):
         '''
         获取朋友昵称 Get friend's nickname
-        :param wxid: 微信号(以wxid_开头) wechatid(start with wxid_)
+        :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了) wechatid(start with wxid_)
         :return: Dictionary
         '''
         return self.get_chatroom_nickname(wxid=wxid)
@@ -197,5 +204,5 @@ class Pywxdll:
 
     ######## 信息处理 ########
 
-    def recv_txt_handle(self, recieve):
+    def _recv_txt_handle(self, recieve):
         return recieve
