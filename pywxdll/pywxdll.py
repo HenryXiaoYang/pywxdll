@@ -2,6 +2,7 @@ import threading
 
 import requests
 import websocket
+from cachetools import cached, TTLCache
 
 from .pywxdll_json import *
 
@@ -151,6 +152,7 @@ class Pywxdll:
     def heartbeat(h):
         return h
 
+    @cached(cache=TTLCache(maxsize=10, ttl=15))
     def get_personal_detail(self, wxid: str):
         '''
         获取其他账号信息 get other user's information
@@ -160,6 +162,7 @@ class Pywxdll:
         uri = '/api/get_personal_detail'
         return self._send_http(uri, json_get_personal_detail(wxid))['content']
 
+    @cached(cache=TTLCache(maxsize=5, ttl=15))
     def get_contact_list(self):
         '''
         获取微信通讯录用户名字和wxid get wechat address list username and wxid
@@ -168,6 +171,7 @@ class Pywxdll:
         uri = '/api/getcontactlist'
         return self._send_http(uri, json_get_contact_list())['content']
 
+    @cached(cache=TTLCache(maxsize=100, ttl=15))
     def get_chatroom_nickname(self, roomid: str = 'null', wxid: str = 'ROOT'):
         '''
         获取群聊中用户昵称 Get chatroom's user's nickname
@@ -186,6 +190,7 @@ class Pywxdll:
         '''
         return self.get_chatroom_nickname(wxid=wxid)
 
+    @cached(cache=TTLCache(maxsize=5, ttl=30))
     def get_chatroom_memberlist(self, roomid: str = 'null'):
         '''
         获取群聊中用户列表 Get chatroom member list

@@ -1,8 +1,6 @@
-# pywxdll
+# <u>**pywxdll**</u>
 
 一个用于基于hook的微信机器人的Python库
-
-***
 
 # WIKI!
 
@@ -14,22 +12,24 @@ https://henryxiaoyang.github.io/pywxdll
 
 https://github.com/HenryXiaoYang/pywxdll/wiki
 
-
-
-# 安装pywxdll
+## <u>安装pywxdll</u>
 
 在终端中输入 `pip install pywxdll` 即可
 
 
 ***
 
-# 配制环境
+## <u>配制环境</u>
+
+### 方法1: Docker
+
+使用Docker可在x86的 Windows Linux MacOS 上运行
 
 请在这个docker环境下运行：https://github.com/ChisBread/wechat-service/
 
-这个docker只支持x86芯片，arm芯片无法运行
+这个docker只支持x86芯片，arm芯片无法运行 (苹果m系列的别想了(~~不嫌烦有解决方法，自行搜索utm~~))
 
-## 1. 安装Docker
+#### 1. 安装Docker
 
 装好了可跳过
 
@@ -39,14 +39,14 @@ https://github.com/HenryXiaoYang/pywxdll/wiki
 
 https://docs.docker.com/get-docker/
 
-## 2. 拉取Docker镜像
+#### 2. 拉取Docker镜像
 
 ```bash
 #拉取镜像
 docker pull chisbread/wechat-service
 ```
 
-## 3. 运行Docker
+#### 3. 运行Docker
 
 ```bash
 #启动Docker
@@ -61,7 +61,7 @@ docker run --name wechat-service \
     chisbread/wechat-service
 ```
 
-## 4. 登陆微信
+#### 4. 登陆微信
 
 在登陆微信账号前，用于hook的dll注入也没用，所以登陆后才会注入。
 
@@ -70,6 +70,10 @@ docker run --name wechat-service \
 点击`連線`连接到vnc
 
 连接后浏览器中会有微信登陆页面，用手机扫码登陆即可。
+
+### 方法2: Windows微信注入
+
+此方法仅支持 x68 Windows
 
 ## 环境准备完毕
 
