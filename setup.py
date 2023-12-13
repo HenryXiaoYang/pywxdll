@@ -13,12 +13,12 @@ from setuptools import find_packages, setup, Command
 
 # Package meta-data.
 NAME = 'pywxdll'
-DESCRIPTION = 'A Python package for wechat dll hook'
+DESCRIPTION = 'A Python package for wechat robot, basing on dll hook.'
 URL = 'https://github.com/HenryXiaoYang/pywxdll'
 EMAIL = 'henryyang666@hotmal.com'
 AUTHOR = 'HenryXiaoYang'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.2'
+VERSION = '0.2.1'
 
 # What packages are required for this module to be executed?
 REQUIRED = ['websocket-client', 'requests']
