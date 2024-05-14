@@ -2,22 +2,21 @@ import threading
 
 import requests
 import websocket
-from cachetools import cached, TTLCache
 
 from .pywxdll_json import *
 
 HEART_BEAT = 5005
 RECV_TXT_MSG = 1
 RECV_PIC_MSG = 3
-NEW_FRIEND_REQUEST = 37
 RECV_TXT_CITE_MSG = 49
+NEW_FRIEND_REQUEST = 37
 PIC_MSG = 500
 AT_MSG = 550
 TXT_MSG = 555
+ATTATCH_FILE = 5003
 USER_LIST = 5000
 GET_USER_LIST_SUCCSESS = 5001
 GET_USER_LIST_FAIL = 5002
-ATTATCH_FILE = 5003
 CHATROOM_MEMBER = 5010
 CHATROOM_MEMBER_NICK = 5020
 DEBUG_SWITCH = 6000
@@ -40,14 +39,14 @@ class Pywxdll:
 
     def _thread_start(self):  # 监听hook The thread for listeing
         websocket.enableTrace(False)  # 开启调试？
-        ws = websocket.WebSocketApp(
+        self.ws = websocket.WebSocketApp(
             self._ws_url,
             on_open=self._on_open,
             on_message=self._on_message,
             on_error=self._on_error,
             on_close=self._on_close
         )
-        ws.run_forever()
+        self.ws.run_forever()
 
     def start(self):  # 开始监听 Start listening for incoming message
         '''
@@ -66,7 +65,7 @@ class Pywxdll:
         r_type = recieve['type']
         if r_type == 5005:
             pass
-        elif r_type == 1 or r_type == 3 or r_type == 49:
+        else:
             self.msg_list.append(self._recv_txt_handle(recieve))
 
     def _on_error(self, ws, error):  # For websocket
@@ -152,7 +151,6 @@ class Pywxdll:
     def heartbeat(h):
         return h
 
-    @cached(cache=TTLCache(maxsize=10, ttl=15))
     def get_personal_detail(self, wxid: str):
         '''
         获取其他账号信息 get other user's information
@@ -162,7 +160,6 @@ class Pywxdll:
         uri = '/api/get_personal_detail'
         return self._send_http(uri, json_get_personal_detail(wxid))['content']
 
-    @cached(cache=TTLCache(maxsize=5, ttl=15))
     def get_contact_list(self):
         '''
         获取微信通讯录用户名字和wxid get wechat address list username and wxid
@@ -171,7 +168,6 @@ class Pywxdll:
         uri = '/api/getcontactlist'
         return self._send_http(uri, json_get_contact_list())['content']
 
-    @cached(cache=TTLCache(maxsize=100, ttl=15))
     def get_chatroom_nickname(self, roomid: str = 'null', wxid: str = 'ROOT'):
         '''
         获取群聊中用户昵称 Get chatroom's user's nickname
@@ -190,7 +186,6 @@ class Pywxdll:
         '''
         return self.get_chatroom_nickname(wxid=wxid)
 
-    @cached(cache=TTLCache(maxsize=5, ttl=30))
     def get_chatroom_memberlist(self, roomid: str = 'null'):
         '''
         获取群聊中用户列表 Get chatroom member list
@@ -211,3 +206,65 @@ class Pywxdll:
 
     def _recv_txt_handle(self, recieve):
         return recieve
+
+    ######## 解密图片 ########
+
+    # 感谢群友提供的代码
+
+    @staticmethod
+    def _get_xor(file_buffer, suffix_map):
+        for key in suffix_map.keys():
+            suffix = suffix_map[key]
+            hex_values = [key[i:i + 2] for i in range(0, len(key), 2)]
+            map_values = []
+            for a in range(3):
+                byte = file_buffer[a]
+                value = byte ^ int(hex_values[a], 16)
+                map_values.append(value)
+            if map_values[0] == map_values[1] == map_values[2]:
+                return {"value": format(map_values[0], 'x'), "suffix": suffix}
+        return None
+
+    def decrypt_wechat_picture(self, file_path: str, output_dir: str = '') -> str:
+        if not os.path.isdir(output_dir) and output_dir:
+            raise Exception('Output directory does not exist')
+        elif not os.path.isfile(file_path):
+            raise Exception('File does not exist')
+
+        file_path = os.path.abspath(file_path)
+
+        suffix_map = {
+            'ffd8ffe000104a464946': 'jpg',
+            '89504e470d0a1a0a0000': 'png',
+            '47494638396126026f01': 'gif',
+            '49492a00227105008037': 'tif',
+            '424d228c010000000000': 'bmp',
+            '424d8240090000000000': 'bmp',
+            '424d8e1b030000000000': 'bmp'
+        }
+
+        with open(file_path, 'rb') as file:
+            buffer = file.read()
+
+        if buffer:
+            xor1 = self._get_xor(buffer, suffix_map)
+            if not xor1:
+                raise Exception('Decrypt failed')
+
+            # 转换之后的文件流
+            new_buffer = bytearray()
+            # 遍历文件流
+            for value in buffer:
+                # 异或运算
+                new_buffer.append(value ^ int('0x' + xor1['value'], 16))
+
+            # 保存文件
+            save_file_name = os.path.join(output_dir,
+                                          os.path.splitext(os.path.basename(file_path))[0] + '.' + xor1['suffix'])
+            with open(save_file_name, 'wb') as file:
+                file.write(new_buffer)
+
+            return os.path.abspath(save_file_name)
+        else:
+            # 处理读取失败的情况
+            raise Exception('Read file failed')

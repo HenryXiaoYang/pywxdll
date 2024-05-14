@@ -1,5 +1,6 @@
 import json
 import time
+import os
 
 HEART_BEAT = 5005
 RECV_TXT_MSG = 1
@@ -43,7 +44,7 @@ def json_send_pic_msg(wxid, path: str):
         'type': PIC_MSG,
         'wxid': wxid,
         'roomid': 'null',
-        'content': path,
+        'content': os.path.abspath(path),
         'nickname': "null",
         'ext': 'null'
     }
@@ -73,7 +74,7 @@ def json_send_attach_msg(wxid, path):
         'type': ATTATCH_FILE,
         'wxid': wxid,
         'roomid': 'null',
-        'content': path,
+        'content': os.path.abspath(path),
         'nickname': "null",
         'ext': 'null'
     }
