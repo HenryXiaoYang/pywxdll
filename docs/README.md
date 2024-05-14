@@ -257,9 +257,9 @@ bot = pywxdll.Pywxdll('127.0.0.1', 5555)
 bot.start()
 
 # 注意文件路径是docker中的路径，不是本地路径
-bot.send_pic_msg('12345678900@chatroom',
+bot.send_attach_msg('12345678900@chatroom',
                  '/files/lotofthings.zip')  # 把路径为 /files/lotofthings.zip 的文件发到发送到群12345678900@chatroom
-bot.send_pic_msg('wxid_12345678900000',
+bot.send_attach_msg('wxid_12345678900000',
                  '/files/lotofthings.zip')  # 把路径为 /files/lotofthings.zip 的文件发送到朋友wxid_12345678900000
 ```
 
