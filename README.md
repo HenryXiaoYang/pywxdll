@@ -2,16 +2,6 @@
 
 一个用于基于hook的微信机器人的Python库
 
-# WIKI!
-
-这个好看：
-
-https://henryxiaoyang.github.io/pywxdll
-
-这个Github Wiki：
-
-https://github.com/HenryXiaoYang/pywxdll/wiki
-
 ## <u>安装pywxdll</u>
 
 在终端中输入 `pip install pywxdll` 即可
