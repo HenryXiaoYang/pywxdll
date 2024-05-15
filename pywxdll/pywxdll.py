@@ -2,7 +2,6 @@ import threading
 
 import requests
 import websocket
-from cachetools import cached, TTLCache
 
 from .pywxdll_json import *
 
@@ -29,10 +28,10 @@ JOIN_ROOM = 10000
 
 class Pywxdll:
     def __init__(self, ip='127.0.0.1', port=5555):  # 微信hook服务器的ip地址和端口 The ip and port for wechat hook server
-        '''
+        """
         :param ip:
         :param port:
-        '''
+        """
         self.ip = ip
         self.port = port
         self._ws_url = f'ws://{ip}:{port}'  # websocket url
@@ -50,10 +49,10 @@ class Pywxdll:
         self.ws.run_forever()
 
     def start(self):  # 开始监听 Start listening for incoming message
-        '''
+        """
         开始监听微信消息 Start listening for incoming message
         :return:
-        '''
+        """
         wxt = threading.Thread(target=self._thread_start)
         wxt.daemon = True
         wxt.start()
@@ -102,101 +101,98 @@ class Pywxdll:
         return rsp
 
     def send_txt_msg(self, wxid: str, content: str):
-        '''
+        """
         发送txt消息到朋友或群 Send txt message to a friend or chatroom
         :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
         :param content: 要发送的文本 content to send
         :return: Dictionary
-        '''
+        """
         uri = '/api/sendtxtmsg'
         return self._send_http(uri, json_send_txt_msg(wxid, content))
 
     def send_pic_msg(self, wxid: str, path: str):
-        '''
+        """
         发送图片信息发送txt消息到朋友或群 Send picture to a friend or chatroom
         :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
         :param path: 图片路径 path to picture
         :return:
-        '''
+        """
         uri = '/api/sendpic'
         return self._send_http(uri, json_send_pic_msg(wxid, path))
 
     def send_at_msg(self, roomid: str, wxid: str, nickname: str, content: str):
-        '''
+        """
         发送@信息到群  send @ message to chatroom
         :param roomid: 群号(以@chatroom结尾) groupchatid(end with@chatroom)
         :param wxid: 要@的人的wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了) wechatid(start with wxid_) of person you want to @
         :param nickname: 要@的人的昵称，可随意修改 nickname of person you want to @
         :param content: 要发送的文本 content to send
         :return:
-        '''
+        """
         uri = '/api/sendatmsg'
         return self._send_http(uri, json_send_at_msg(roomid, wxid, nickname, content))
 
     def send_attach_msg(self, wxid: str, path: str):
-        '''
+        """
         发送文件到朋友或群 send attachment to friend or chatroom
         :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了)或者群号(以@chatroom结尾) wechatid(start with wxid_) or groupchatid(end with@chatroom)
         :param path: 文件的路径 path to file
         :return:
-        '''
+        """
         uri = '/api/sendattatch'
         return self._send_http(uri, json_send_attach_msg(wxid, path))
 
     ######## 获取信息 ########
 
     # 获取唯一id
-    def _getid(self):
+    @staticmethod
+    def _getid():
         return time.strftime("%Y%m%d%H%M%S", time.localtime())
 
     def heartbeat(h):
         return h
 
-    @cached(cache=TTLCache(maxsize=10, ttl=15))
     def get_personal_detail(self, wxid: str):
-        '''
+        """
         获取其他账号信息 get other user's information
         :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了) wechatid(start with wxid_)
         :return: Dictionary
-        '''
+        """
         uri = '/api/get_personal_detail'
         return self._send_http(uri, json_get_personal_detail(wxid))['content']
 
-    @cached(cache=TTLCache(maxsize=5, ttl=15))
     def get_contact_list(self):
-        '''
+        """
         获取微信通讯录用户名字和wxid get wechat address list username and wxid
         :return: Dictionary
-        '''
+        """
         uri = '/api/getcontactlist'
         return self._send_http(uri, json_get_contact_list())['content']
 
-    @cached(cache=TTLCache(maxsize=100, ttl=15))
     def get_chatroom_nickname(self, roomid: str = 'null', wxid: str = 'ROOT'):
-        '''
+        """
         获取群聊中用户昵称 Get chatroom's user's nickname
         :param roomid: 群号(以@chatroom结尾) groupchatid(end with@chatroom)
         :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了) wechatid(start with wxid_)
         :return: Dictionary
-        '''
+        """
         uri = 'api/getmembernick'
         return self._send_http(uri, json_get_chatroom_nick(roomid, wxid))['content']
 
     def get_user_nickname(self, wxid: str):
-        '''
+        """
         获取朋友昵称 Get friend's nickname
         :param wxid: wxid(新用户的wxid以wxid_开头 老用户他们可能修改过 现在改不了) wechatid(start with wxid_)
         :return: Dictionary
-        '''
+        """
         return self.get_chatroom_nickname(wxid=wxid)
 
-    @cached(cache=TTLCache(maxsize=5, ttl=30))
     def get_chatroom_memberlist(self, roomid: str = 'null'):
-        '''
+        """
         获取群聊中用户列表 Get chatroom member list
         :param roomid: 群号(以@chatroom结尾) groupchatid(end with@chatroom)
         :return: List or Dictionary
-        '''
+        """
         uri = '/api/get_charroom_member_list'
         result = self._send_http(uri, json_get_chatroom_memberlist(roomid))['content']
         if roomid == 'null':
@@ -209,7 +205,8 @@ class Pywxdll:
 
     ######## 信息处理 ########
 
-    def _recv_txt_handle(self, recieve):
+    @staticmethod
+    def _recv_txt_handle(recieve):
         return recieve
 
     ######## 解密图片 ########
